@@ -21,6 +21,8 @@ locals {
   zone   = length(split("-", var.location)) == 3 ? var.location : format("%s-a", var.location)
 
   authorized_networks = var.allow_local_ip_access ? concat(var.master_authorized_networks_config, [{ "display_name" : "myip", "cidr_block" : "${chomp(data.http.myip.body)}/32" }]) : var.master_authorized_networks_config
+
+  multi_region = split("-", var.location)[0] == "europe" ? "eu" : split("-", var.location)[0]
 }
 
 provider "google" {
@@ -93,7 +95,7 @@ resource "google_compute_router_nat" "nat" {
 
 resource "google_storage_bucket" "bucket" {
   name     = "dominodatalab-${local.cluster}"
-  location = split("-", var.location)[0]
+  location = local.multi_region
 
   versioning {
     enabled = true
@@ -121,6 +123,10 @@ resource "google_filestore_instance" "nfs" {
 }
 
 resource "google_container_cluster" "domino_cluster" {
+  depends_on = [
+    google_kms_crypto_key_iam_binding.cluster-kms
+  ]
+
   provider = google-beta
 
   name        = local.cluster
@@ -300,6 +306,7 @@ resource "google_kms_crypto_key" "crypto_key" {
 }
 
 resource "google_container_node_pool" "gpu" {
+  count = var.gpu_nodes_max > 0 ? 1 : 0
   name     = "gpu"
   location = google_container_cluster.domino_cluster.location
   cluster  = google_container_cluster.domino_cluster.name

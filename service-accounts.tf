@@ -78,9 +78,19 @@ resource "google_project_iam_member" "platform_monitoring" {
 }
 
 resource "google_service_account_iam_binding" "platform_docker_registry" {
+  depends_on = [google_container_cluster.domino_cluster] 
   service_account_id = google_service_account.platform.name
   role               = "roles/iam.workloadIdentityUser"
   members = [
     "serviceAccount:${var.project}.svc.id.goog[${var.platform_namespace}/docker-registry]",
+  ]
+}
+
+resource "google_kms_crypto_key_iam_binding" "cluster-kms" {
+  crypto_key_id = google_kms_crypto_key.crypto_key.id
+  role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
+
+  members = [
+    "serviceAccount:service-${data.google_project.domino.number}@container-engine-robot.iam.gserviceaccount.com"
   ]
 }
