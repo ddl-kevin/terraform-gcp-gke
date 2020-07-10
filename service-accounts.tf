@@ -78,7 +78,7 @@ resource "google_project_iam_member" "platform_monitoring" {
 }
 
 resource "google_service_account_iam_binding" "platform_docker_registry" {
-  depends_on = [google_container_cluster.domino_cluster] 
+  depends_on         = [google_container_cluster.domino_cluster]
   service_account_id = google_service_account.platform.name
   role               = "roles/iam.workloadIdentityUser"
   members = [

@@ -200,3 +200,23 @@ variable "platform_namespace" {
   description = "Platform namespace that is used for generating the service account binding for docker-registry"
   default     = "domino-platform"
 }
+
+variable "pod_cidr" {
+  type        = string
+  description = "The network from which Pods will be assigned IPs."
+  default     = "10.0.0.0/16"
+}
+
+variable "service_cidr" {
+  type        = string
+  description = "The network from which Pods will be assigned IPs."
+  default     = "10.1.0.0/16"
+}
+
+variable "node_cidr" {
+  type        = string
+  description = "The network from which Nodes will be assigned IPs."
+  default     = "10.2.0.0/16"
+}
+
+

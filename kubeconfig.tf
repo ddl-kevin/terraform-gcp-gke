@@ -13,6 +13,49 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(local.cluster_ca_certificate)
 }
 
+resource "kubernetes_namespace" "platform" {
+  metadata {
+    name = "domino-platform"
+    labels = {
+      domino-platform = "true"
+    }
+  }
+}
+
+resource "kubernetes_storage_class" "ssd" {
+  metadata {
+    name = "ssd"
+  }
+  storage_provisioner = "kubernetes.io/gce-pd"
+  parameters = {
+    type = "pd-ssd"
+  }
+}
+
+resource "kubernetes_service" "nginx-ingress-controller" {
+  depends_on = [kubernetes_namespace.platform]
+  metadata {
+    name      = "nginx-ingress-controller"
+    namespace = "domino-platform"
+    annotations = {
+      "cloud.google.com/app-protocols" = "{\"https\":\"HTTPS\"}"
+    }
+  }
+  spec {
+    selector = {
+      "app.kubernetes.io/component" = "controller"
+      "app.kubernetes.io/instance"  = "nginx-ingress"
+      "app.kubernetes.io/name"      = "nginx-ingress"
+    }
+    port {
+      protocol    = "TCP"
+      port        = 443
+      target_port = 443
+      name        = "https"
+    }
+    type = "NodePort"
+  }
+}
 
 resource "kubernetes_cluster_role_binding" "client_admin" {
   metadata {

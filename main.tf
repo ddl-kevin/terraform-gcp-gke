@@ -74,7 +74,7 @@ resource "google_compute_network" "vpc_network" {
 
 resource "google_compute_subnetwork" "default" {
   name                     = local.uuid
-  ip_cidr_range            = "10.138.0.0/20"
+  ip_cidr_range            = var.node_cidr
   network                  = google_compute_network.vpc_network.self_link
   private_ip_google_access = true
   description              = "${local.cluster} default network"
@@ -145,8 +145,9 @@ resource "google_container_cluster" "domino_cluster" {
   # Workaround for https://github.com/terraform-providers/terraform-provider-google/issues/3385
   initial_node_count = max(1, var.compute_nodes_min) + max(0, var.gpu_nodes_min) + var.platform_nodes_max
 
-  network    = google_compute_network.vpc_network.self_link
-  subnetwork = google_compute_subnetwork.default.self_link
+  network         = google_compute_network.vpc_network.self_link
+  subnetwork      = google_compute_subnetwork.default.self_link
+  networking_mode = "VPC_NATIVE"
 
   enable_tpu = true
 
@@ -179,7 +180,10 @@ resource "google_container_cluster" "domino_cluster" {
     master_ipv4_cidr_block  = "172.16.1.0/28"
   }
 
-  ip_allocation_policy {}
+  ip_allocation_policy {
+    cluster_ipv4_cidr_block  = var.pod_cidr
+    services_ipv4_cidr_block = var.service_cidr
+  }
 
   master_authorized_networks_config {
     dynamic "cidr_blocks" {
@@ -306,7 +310,7 @@ resource "google_kms_crypto_key" "crypto_key" {
 }
 
 resource "google_container_node_pool" "gpu" {
-  count = var.gpu_nodes_max > 0 ? 1 : 0
+  count    = var.gpu_nodes_max > 0 ? 1 : 0
   name     = "gpu"
   location = google_container_cluster.domino_cluster.location
   cluster  = google_container_cluster.domino_cluster.name
