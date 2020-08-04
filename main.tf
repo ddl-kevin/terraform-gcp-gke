@@ -243,7 +243,6 @@ resource "google_container_node_pool" "platform" {
     }
 
     disk_size_gb    = var.platform_nodes_ssd_gb
-    local_ssd_count = 1
   }
 
   management {
@@ -283,7 +282,6 @@ resource "google_container_node_pool" "compute" {
     }
 
     disk_size_gb    = var.compute_nodes_ssd_gb
-    local_ssd_count = 1
   }
 
   management {
@@ -340,7 +338,6 @@ resource "google_container_node_pool" "gpu" {
     }
 
     disk_size_gb    = var.gpu_nodes_ssd_gb
-    local_ssd_count = 1
   }
 
   management {
